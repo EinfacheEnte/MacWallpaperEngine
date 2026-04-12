@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 
+@MainActor
 final class WallpaperPlaybackController {
     private var player: AVQueuePlayer?
     private var looper: AVPlayerLooper?

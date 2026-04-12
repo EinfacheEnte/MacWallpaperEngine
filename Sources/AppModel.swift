@@ -106,6 +106,30 @@ final class AppModel: ObservableObject {
         isRunning = false
         wallpaperController.stop()
         displayManager.stop()
+        removeObservers()
+    }
+
+    private func removeObservers() {
+        if let o = screenParamsObserver {
+            NotificationCenter.default.removeObserver(o)
+            screenParamsObserver = nil
+        }
+        if let o = sleepObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(o)
+            sleepObserver = nil
+        }
+        if let o = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(o)
+            wakeObserver = nil
+        }
+        if let o = activeSpaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(o)
+            activeSpaceObserver = nil
+        }
+        if let o = didBecomeActiveObserver {
+            NotificationCenter.default.removeObserver(o)
+            didBecomeActiveObserver = nil
+        }
     }
 }
 

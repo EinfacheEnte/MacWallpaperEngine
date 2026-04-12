@@ -94,7 +94,6 @@ final class WallpaperWindowController {
         window.title = "Wallpaper \(title)"
 
         let root = WallpaperRootView()
-        root.translatesAutoresizingMaskIntoConstraints = false
         window.contentView = root
 
         let playerView = PlayerHostingView()

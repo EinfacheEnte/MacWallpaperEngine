@@ -5,10 +5,10 @@ import AppKit
 struct WallpaperEngineMacApp: App {
     @StateObject private var settings = SettingsModel()
     @StateObject private var appModel = AppModel()
-    @State private var settingsWindowController: NSWindowController?
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        WindowGroup("Settings") {
+        Window("Settings", id: "settings") {
             ContentView()
                 .environmentObject(settings)
                 .environmentObject(appModel)
@@ -38,10 +38,14 @@ struct WallpaperEngineMacApp: App {
 
                 Button("Choose video (same for all)…") {
                     settings.chooseSameVideo()
+                    if appModel.isRunning {
+                        appModel.apply(using: settings)
+                    }
                 }
 
                 Button("Open settings…") {
-                    openSettingsWindow()
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(id: "settings")
                 }
 
                 Divider()
@@ -60,12 +64,4 @@ struct WallpaperEngineMacApp: App {
             .padding(.vertical, 4)
         }
     }
-
-    private func openSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        // SwiftUI WindowGroup will already exist; just bring app forward.
-        // If user closed the window, macOS typically recreates it via Window menu or dock icon.
-        // Keeping this minimal for v1 menubar mode.
-    }
 }
-
