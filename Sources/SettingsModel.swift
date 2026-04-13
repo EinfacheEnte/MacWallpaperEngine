@@ -36,7 +36,7 @@ final class SettingsModel: ObservableObject {
 
     @Published private(set) var knownDisplays: [DisplayInfo] = []
 
-    @Published private var perDisplayVideoPath: [String: String] {
+    @Published var perDisplayVideoPath: [String: String] {
         didSet { persist() }
     }
 
@@ -68,28 +68,6 @@ final class SettingsModel: ObservableObject {
         perDisplayVideoPath[id] ?? ""
     }
 
-    func chooseSameVideo() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.movie]
-        if panel.runModal() == .OK, let url = panel.url {
-            sameVideoPath = url.path
-        }
-    }
-
-    func chooseVideo(forDisplayID id: String) {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.movie]
-        if panel.runModal() == .OK, let url = panel.url {
-            perDisplayVideoPath[id] = url.path
-        }
-    }
-
     func resolvedVideoPath(forDisplayID id: String) -> String? {
         switch mode {
         case .sameForAll:
@@ -108,4 +86,3 @@ final class SettingsModel: ObservableObject {
         store.set(launchAtLogin, forKey: Keys.launchAtLogin)
     }
 }
-

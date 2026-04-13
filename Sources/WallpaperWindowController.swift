@@ -8,6 +8,7 @@ final class WallpaperWindowController {
         let window: NSWindow
         let playerView: PlayerHostingView
         let playback: WallpaperPlaybackController
+        let occlusionObserver: Any
     }
 
     private var slotsByDisplayID: [String: WindowSlot] = [:]
@@ -25,7 +26,6 @@ final class WallpaperWindowController {
     }
 
     func apply(settings: SettingsModel, displays: [DisplayDescriptor]) {
-        // Create/update windows for current displays
         var keep: Set<String> = []
         for display in displays {
             keep.insert(display.id)
@@ -44,9 +44,9 @@ final class WallpaperWindowController {
             }
         }
 
-        // Tear down windows for removed displays
         for (id, slot) in slotsByDisplayID where !keep.contains(id) {
             slot.playback.stop()
+            NotificationCenter.default.removeObserver(slot.occlusionObserver)
             slot.window.orderOut(nil)
             slotsByDisplayID[id] = nil
         }
@@ -55,9 +55,16 @@ final class WallpaperWindowController {
     func stop() {
         for (_, slot) in slotsByDisplayID {
             slot.playback.stop()
+            NotificationCenter.default.removeObserver(slot.occlusionObserver)
             slot.window.orderOut(nil)
         }
         slotsByDisplayID.removeAll()
+    }
+
+    func bringAllToFront() {
+        for (_, slot) in slotsByDisplayID {
+            slot.window.orderFrontRegardless()
+        }
     }
 
     private func applyPlayback(to slot: WindowSlot, settings: SettingsModel, displayID: String) {
@@ -84,12 +91,18 @@ final class WallpaperWindowController {
         window.hasShadow = false
         window.backgroundColor = .black
         window.ignoresMouseEvents = true
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         window.isReleasedWhenClosed = false
+        window.animationBehavior = .none
 
-        // Desktop-level window (behind normal apps).
+        // Prevent macOS from hiding/unloading the window when app is in background
+        window.hidesOnDeactivate = false
+        window.canHide = false
+
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+
+        // Just above macOS desktop wallpaper, below normal windows.
         let desktopLevel = CGWindowLevelForKey(.desktopWindow)
-        window.level = NSWindow.Level(rawValue: Int(desktopLevel))
+        window.level = NSWindow.Level(rawValue: Int(desktopLevel) + 1)
 
         window.title = "Wallpaper \(title)"
 
@@ -107,7 +120,21 @@ final class WallpaperWindowController {
         ])
 
         let playback = WallpaperPlaybackController()
-        return WindowSlot(window: window, playerView: playerView, playback: playback)
+
+        // When the window becomes visible again after being occluded (e.g. switching
+        // back from a fullscreen app), force it to the front immediately.
+        let observer = NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification,
+            object: window,
+            queue: .main
+        ) { notification in
+            guard let w = notification.object as? NSWindow else { return }
+            if w.occlusionState.contains(.visible) {
+                w.orderFrontRegardless()
+            }
+        }
+
+        return WindowSlot(window: window, playerView: playerView, playback: playback, occlusionObserver: observer)
     }
 }
 
@@ -122,4 +149,3 @@ private final class WallpaperRootView: NSView {
         nil
     }
 }
-

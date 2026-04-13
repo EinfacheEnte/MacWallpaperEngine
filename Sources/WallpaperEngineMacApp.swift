@@ -5,6 +5,7 @@ import AppKit
 struct WallpaperEngineMacApp: App {
     @StateObject private var settings = SettingsModel()
     @StateObject private var appModel = AppModel()
+    @StateObject private var library = VideoLibrary()
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
@@ -12,9 +13,10 @@ struct WallpaperEngineMacApp: App {
             ContentView()
                 .environmentObject(settings)
                 .environmentObject(appModel)
-                .frame(minWidth: 540, minHeight: 380)
+                .environmentObject(library)
+                .frame(minWidth: 540, minHeight: 480)
         }
-        .defaultSize(width: 640, height: 420)
+        .defaultSize(width: 640, height: 520)
         .commands {
             CommandGroup(replacing: .newItem) { }
         }
@@ -35,13 +37,6 @@ struct WallpaperEngineMacApp: App {
                 .disabled(!appModel.isRunning)
 
                 Divider()
-
-                Button("Choose video (same for all)…") {
-                    settings.chooseSameVideo()
-                    if appModel.isRunning {
-                        appModel.apply(using: settings)
-                    }
-                }
 
                 Button("Open settings…") {
                     NSApp.activate(ignoringOtherApps: true)

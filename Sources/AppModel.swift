@@ -7,12 +7,14 @@ final class AppModel: ObservableObject {
 
     private let wallpaperController = WallpaperWindowController()
     private let displayManager = DisplayManager()
+    private var activityToken: NSObjectProtocol?
 
     private var screenParamsObserver: Any?
     private var sleepObserver: Any?
     private var wakeObserver: Any?
     private var activeSpaceObserver: Any?
     private var didBecomeActiveObserver: Any?
+    private var didResignActiveObserver: Any?
 
     func start(using settings: SettingsModel) {
         if isRunning {
@@ -21,21 +23,26 @@ final class AppModel: ObservableObject {
         }
         isRunning = true
 
+        activityToken = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiated, .idleSystemSleepDisabled],
+            reason: "Playing live wallpaper video"
+        )
+
         displayManager.start()
         wallpaperController.apply(settings: settings, displays: displayManager.currentDisplays())
 
         if screenParamsObserver == nil {
             screenParamsObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didChangeScreenParametersNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in
-                guard let self else { return }
-                guard self.isRunning else { return }
-                self.wallpaperController.apply(settings: settings, displays: self.displayManager.currentDisplays())
+                forName: NSApplication.didChangeScreenParametersNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    guard self.isRunning else { return }
+                    self.wallpaperController.apply(settings: settings, displays: self.displayManager.currentDisplays())
+                }
             }
-        }
         }
 
         if sleepObserver == nil {
@@ -44,7 +51,7 @@ final class AppModel: ObservableObject {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     guard self.isRunning else { return }
                     self.wallpaperController.pauseAll()
@@ -58,7 +65,7 @@ final class AppModel: ObservableObject {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     guard self.isRunning else { return }
                     self.wallpaperController.resumeAll()
@@ -72,7 +79,7 @@ final class AppModel: ObservableObject {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     guard self.isRunning else { return }
                     self.wallpaperController.resumeAll()
@@ -86,10 +93,24 @@ final class AppModel: ObservableObject {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     guard self.isRunning else { return }
                     self.wallpaperController.resumeAll()
+                }
+            }
+        }
+
+        if didResignActiveObserver == nil {
+            didResignActiveObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    guard self.isRunning else { return }
+                    self.wallpaperController.bringAllToFront()
                 }
             }
         }
@@ -107,6 +128,10 @@ final class AppModel: ObservableObject {
         wallpaperController.stop()
         displayManager.stop()
         removeObservers()
+        if let token = activityToken {
+            ProcessInfo.processInfo.endActivity(token)
+            activityToken = nil
+        }
     }
 
     private func removeObservers() {
@@ -130,6 +155,9 @@ final class AppModel: ObservableObject {
             NotificationCenter.default.removeObserver(o)
             didBecomeActiveObserver = nil
         }
+        if let o = didResignActiveObserver {
+            NotificationCenter.default.removeObserver(o)
+            didResignActiveObserver = nil
+        }
     }
 }
-
