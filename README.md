@@ -21,13 +21,8 @@ A native macOS app that plays looping video wallpapers on your desktop — like 
 - **Sleep/wake aware** — pauses playback when your Mac sleeps, resumes on wake
 - **Hot-plug detection** — automatically handles displays being connected or disconnected
 
-## Known Issues
-
-- **Background playback** — when switching from a fullscreen app back to the desktop, the macOS default wallpaper may briefly flash (~1 second) before the video wallpaper reappears. This is due to macOS suspending video rendering for occluded windows. A fix is in progress.
-
 ## Roadmap
 
-- [ ] Fix background playback (video stays active behind fullscreen apps)
 - [ ] Screensaver mode (use your wallpaper as the screensaver)
 - [ ] Login screen wallpaper
 - [ ] Video thumbnails in the library
