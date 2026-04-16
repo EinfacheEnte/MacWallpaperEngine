@@ -23,7 +23,7 @@ A native macOS app that plays looping video wallpapers on your desktop — like 
 
 ## Roadmap
 
-- [ ] Screensaver mode (use your wallpaper as the screensaver)
+- [ ] **Screensaver mode** ← top priority
 - [ ] Login screen wallpaper
 - [ ] Video thumbnails in the library
 - [ ] Drag & drop to add videos
