@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "WallpaperEngineMac",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v14)
     ],
     products: [
         .executable(name: "WallpaperEngineMac", targets: ["WallpaperEngineMac"])
@@ -12,8 +12,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "WallpaperEngineMac",
-            path: "Sources"
+            path: "Sources",
+            exclude: ["WallpaperEngineSaver"]
         )
     ]
 )
-

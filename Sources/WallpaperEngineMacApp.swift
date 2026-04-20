@@ -46,7 +46,7 @@ struct WallpaperEngineMacApp: App {
                 Divider()
 
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
-                    .onChange(of: settings.launchAtLogin) { newValue in
+                    .onChange(of: settings.launchAtLogin) { _, newValue in
                         LoginItemManager.setEnabled(newValue)
                     }
 
